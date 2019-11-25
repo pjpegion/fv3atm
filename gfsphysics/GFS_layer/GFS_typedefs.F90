@@ -487,7 +487,6 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: skebu_wts (:,:) => null()  !
     real (kind=kind_phys), pointer :: skebv_wts (:,:) => null()  !
     real (kind=kind_phys), pointer :: sfc_wts   (:,:) => null()  ! mg, sfc-perts
-    integer              :: nsfcpert=6                             !< number of sfc perturbations
 
     !--- aerosol surface emissions for Thompson microphysics
     real (kind=kind_phys), pointer :: nwfa2d  (:)     => null()  !< instantaneous water-friendly sfc aerosol source
@@ -926,18 +925,18 @@ module GFS_typedefs
 
 !--- stochastic physics control parameters
     logical              :: do_sppt
-    logical              :: use_zmtnblck
     logical              :: do_shum
     logical              :: do_skeb
-    integer              :: skeb_npass
     logical              :: do_sfcperts
-    integer              :: nsfcpert=6
-    real(kind=kind_phys) :: pertz0(5)          ! mg, sfc-perts
-    real(kind=kind_phys) :: pertzt(5)          ! mg, sfc-perts
-    real(kind=kind_phys) :: pertshc(5)         ! mg, sfc-perts
-    real(kind=kind_phys) :: pertlai(5)         ! mg, sfc-perts
-    real(kind=kind_phys) :: pertalb(5)         ! mg, sfc-perts
-    real(kind=kind_phys) :: pertvegf(5)        ! mg, sfc-perts
+    logical              :: use_zmtnblck
+    integer              :: nsfcpert=6           !< number of sfc perturbations
+    integer              :: skeb_npass           !< number of sfc perturbations
+    real(kind=kind_phys) :: pertz0(5)            ! roughness length
+    real(kind=kind_phys) :: pertzt(5)            ! thermal roughness length
+    real(kind=kind_phys) :: pertshc(5)           ! soil hydrolgic conductivity
+    real(kind=kind_phys) :: pertlai(5)           ! leaf area index perturbations
+    real(kind=kind_phys) :: pertalb(5)           ! albedo         
+    real(kind=kind_phys) :: pertvegf(5)          ! vegetation fraction
 !--- tracer handling
     character(len=32), pointer :: tracer_names(:) !< array of initialized tracers from dynamic core
     integer              :: ntrac           !< number of tracers
@@ -2987,18 +2986,33 @@ module GFS_typedefs
 
 !--- stochastic physics control parameters
     logical :: do_sppt      = .false.
-    logical :: use_zmtnblck = .false.
     logical :: do_shum      = .false.
     logical :: do_skeb      = .false.
-    integer :: skeb_npass = 11
-    logical :: do_sfcperts = .false.   ! mg, sfc-perts
-    integer :: nsfcpert    =  6        ! mg, sfc-perts
-    real(kind=kind_phys) :: pertz0   = -999.
-    real(kind=kind_phys) :: pertzt   = -999.
-    real(kind=kind_phys) :: pertshc  = -999.
-    real(kind=kind_phys) :: pertlai  = -999.
-    real(kind=kind_phys) :: pertalb  = -999.
-    real(kind=kind_phys) :: pertvegf = -999.
+    logical :: do_sfcperts  = .false.   
+!   follow are read in from stochastic physics namelist just to set stochastic
+!   phsics logic (do_sppt,do_shum,do_skeb,do_sfcpert)
+! stochastic physics namelist options (only needed here for getting logic)
+      integer nsskeb,lon_s,lat_s,ntrunc
+      integer skeb_varspect_opt,skeb_npass
+      logical sppt_sfclimit
+      real(kind=kind_phys) :: skeb_sigtop1,skeb_sigtop2,          &
+                         sppt_sigtop1,sppt_sigtop2,shum_sigefold, &
+                         skeb_vdof
+      real(kind=kind_phys) fhstoch,skeb_diss_smooth,skebint,skebnorm
+      real(kind=kind_phys), dimension(5) :: skeb,skeb_lscale,skeb_tau
+      real(kind=kind_phys), dimension(5) :: sppt,sppt_lscale,sppt_tau
+      real(kind=kind_phys), dimension(5) :: shum,shum_lscale,shum_tau
+      integer,dimension(5) ::skeb_vfilt
+      integer(8),dimension(5) ::iseed_sppt,iseed_shum,iseed_skeb
+      logical stochini,sppt_logit
+      logical use_zmtnblck
+      real(kind=kind_phys), dimension(5) :: sfc_lscale,sfc_tau
+      real(kind=kind_phys), dimension(5) :: pertz0,pertshc,pertzt
+      real(kind=kind_phys), dimension(5) :: pertlai,pertvegf,pertalb
+      integer nsfcpert
+      integer(8),dimension(5) ::iseed_sfc
+      logical sppt_land
+
 
 !--- aerosol scavenging factors
     character(len=20) :: fscav_aero(20) = 'default'
@@ -3060,7 +3074,6 @@ module GFS_typedefs
                                do_deep, jcap,                                               &
                                cs_parm, flgmin, cgwf, ccwf, cdmbgwd, sup, ctei_rm, crtrh,   &
                                dlqf, rbcr, shoc_parm, psauras, prauras, wminras,            &
-                               do_sppt, do_shum, do_skeb, do_sfcperts,                      &
                           !--- Rayleigh friction
                                prslrd0, ral_ts,  ldiag_ugwp, do_ugwp, do_tofd,              &
                           !--- mass flux deep convection
@@ -3090,6 +3103,14 @@ module GFS_typedefs
                                phys_version,                                                &
                           !--- aerosol scavenging factors ('name:value' string array)
                                fscav_aero
+     NAMELIST /nam_stochy/ntrunc,lon_s,lat_s,sppt,sppt_tau,sppt_lscale,sppt_logit, &
+     iseed_shum,iseed_sppt,shum,shum_tau,&
+     shum_lscale,fhstoch,stochini,skeb_varspect_opt,sppt_sfclimit, &
+     skeb,skeb_tau,skeb_vdof,skeb_lscale,iseed_skeb,skeb_vfilt,skeb_diss_smooth, &
+     skeb_sigtop1,skeb_sigtop2,skebnorm,sppt_sigtop1,sppt_sigtop2,&
+     shum_sigefold,skebint,skeb_npass,use_zmtnblck
+     NAMELIST /nam_sfcperts/pertz0,pertshc,pertzt,pertlai, & ! mg, sfcperts
+     pertvegf,pertalb,iseed_sfc,sfc_tau,sfc_lscale,sppt_land
 
 !--- other parameters 
     integer :: nctp    =  0                !< number of cloud types in CS scheme
@@ -3101,12 +3122,26 @@ module GFS_typedefs
 
 !--- convective clouds
     integer :: ncnvcld3d = 0       !< number of convective 3d clouds fields
-
-
+! stochastic physics setting we care about here
+    pertz0   =-999.0  ! roughness length
+    pertzt   =-999.0  ! thermal roughness length
+    pertshc  =-999.0  ! soil hydrolgic conductivity
+    pertlai  =-999.0  ! leaf area index perturbations
+    pertalb  =-999.0  ! albedo         
+    pertvegf =-999.0  ! vegetation fraction
+    sppt     =-999.0  ! sppt amplitude 
+    shum     =-999.0  ! shum amplitude 
+    skeb     =-999.0  ! skeb amplitude
 !--- read in the namelist
 #ifdef INTERNAL_FILE_NML
     Model%input_nml_file => input_nml_file
     read(Model%input_nml_file, nml=gfs_physics_nml)
+    read(Model%input_nml_file, nml=nam_stochy,iostat=ios)
+    print*,'read nam_stochy',ios
+    read(Model%input_nml_file, nml=nam_sfcperts,iostat=ios)
+    print*,'read nam_sfcperts',ios
+    read(Model%input_nml_file, nml=nam_stochy,iostat=ios)
+    print*,'read again',ios
 #ifdef CCPP
     ! Set length (number of lines) in namelist for internal reads
     Model%input_nml_file_length = size(Model%input_nml_file)
@@ -3121,12 +3156,15 @@ module GFS_typedefs
     endif
     rewind(nlunit)
     read (nlunit, nml=gfs_physics_nml)
+    read (nlunit, nml=nam_stochy)
+    read (nlunit, nml=nam_sfcperts)
     close (nlunit)
 #ifdef CCPP
     ! Set length (number of lines) in namelist for internal reads
     Model%input_nml_file_length = 0
 #endif
 #endif
+print*,'after namelist read',sppt,shum,skeb
 !--- write version number and namelist to log file ---
     if (me == master) then
       write(logunit, '(a80)') '================================================================================'
@@ -3514,21 +3552,18 @@ module GFS_typedefs
     Model%bl_dnfr          = bl_dnfr
 
 !--- stochastic physics options
-    ! do_sppt, do_shum, do_skeb and do_sfcperts are namelist variables in group
-    ! physics that are parsed here and then compared in init_stochastic_physics
-    ! to the stochastic physics namelist parametersto ensure consistency.
+    if (sppt(1) > 0) do_sppt=.true.
+    if (shum(1) > 0) do_shum=.true.
+    if (skeb(1) > 0) do_skeb=.true.
+    IF (pertz0(1) > 0 .OR. pertshc(1) > 0 .OR. pertzt(1) > 0 .OR. &
+        pertlai(1) > 0 .OR. pertvegf(1) > 0 .OR. pertalb(1) > 0) THEN
+        do_sfcperts=.true.
+    ENDIF  
+
     Model%do_sppt          = do_sppt
-    Model%use_zmtnblck     = use_zmtnblck
     Model%do_shum          = do_shum
     Model%do_skeb          = do_skeb
     Model%do_sfcperts      = do_sfcperts ! mg, sfc-perts
-    Model%nsfcpert         = nsfcpert    ! mg, sfc-perts
-    Model%pertz0           = pertz0
-    Model%pertzt           = pertzt
-    Model%pertshc          = pertshc
-    Model%pertlai          = pertlai
-    Model%pertalb          = pertalb
-    Model%pertvegf         = pertvegf
 
     !--- cellular automata options
     Model%nca              = nca
