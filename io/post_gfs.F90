@@ -22,6 +22,7 @@ module post_gfs
 !
 !  revision history:
 !     Jul 2019    J. Wang      create interface to run inline post for FV3
+!     Apr 2021    R. Sun       Added variables for Thomspon MP
 !
 !-----------------------------------------------------------------------
 !*** run post on write grid comp
@@ -156,15 +157,19 @@ module post_gfs
             if(mype==0) print *,'af read_xml at fh00,name=',trim(filenameflat)
           else if(ifhr > 0) then
             filenameflat = 'postxconfig-NT.txt'
-            if(size(paramset)>0) then
-              do i=1,size(paramset)
-                if (size(paramset(i)%param)>0) then
-                  deallocate(paramset(i)%param)
-                  nullify(paramset(i)%param)
-                endif
-              enddo
-              deallocate(paramset)
-              nullify(paramset)
+            if(associated(paramset)) then
+              if( size(paramset)>0) then
+                do i=1,size(paramset)
+                  if (associated(paramset(i)%param)) then
+                    if (size(paramset(i)%param)>0) then
+                      deallocate(paramset(i)%param)
+                      nullify(paramset(i)%param)
+                    endif
+                  endif
+                enddo
+                deallocate(paramset)
+                nullify(paramset)
+              endif
             endif
             num_pset = 0
             call read_xml()
@@ -212,7 +217,7 @@ module post_gfs
 !
 !-----------------------------------------------------------------------
 !
-    subroutine post_getattr_gfs(wrt_int_state, fldbundle)
+    subroutine post_getattr_gfs(wrt_int_state)
 !
       use esmf
       use ctlblk_mod,           only: im, jm, mpi_comm_comp
@@ -223,10 +228,9 @@ module post_gfs
       implicit none
 !
       type(wrt_internal_state),intent(inout)    :: wrt_int_state
-      type(ESMF_FieldBundle), intent(in)        :: fldbundle
 !
 ! local variable
-      integer i,j,k,n,kz, attcount
+      integer i,j,k,n,kz, attcount, nfb
       integer ni,naryi,nr4,nr8,rc
       integer aklen,varival
       real(4) varr4val
@@ -235,7 +239,12 @@ module post_gfs
       type(ESMF_TypeKind_Flag)           :: typekind
       real(4), dimension(:), allocatable :: ak4,bk4
       real(8), dimension(:), allocatable :: ak8,bk8
+      type(ESMF_FieldBundle)             :: fldbundle
 !
+! field bundle
+     do nfb=1, wrt_int_state%FBcount
+       fldbundle = wrt_int_state%wrtFB(nfb) 
+
 ! look at the field bundle attributes
       call ESMF_AttributeGet(fldbundle, convention="NetCDF", purpose="FV3", &
         attnestflag=ESMF_ATTNEST_OFF, Count=attcount, rc=rc)
@@ -311,6 +320,8 @@ module post_gfs
         endif
 !
       enddo
+!
+      enddo !end nfb
 !      print *,'in post_getattr, dtp=',wrt_int_state%dtp
 !
     end subroutine post_getattr_gfs
@@ -332,7 +343,7 @@ module post_gfs
       use vrbls3d,     only: t, q, uh, vh, wh, alpint, dpres, zint, zmid, o3,  &
                              qqr, qqs, cwm, qqi, qqw, qqg, omga, cfr, pmid,    &
                              q2, rlwtt, rswtt, tcucn, tcucns, train, el_pbl,   &
-                             pint, exch_h, ref_10cm
+                             pint, exch_h, ref_10cm, qqni,qqnr,qqnwfa,qqnifa
       use vrbls2d,     only: f, pd, sigt4, fis, pblh, ustar, z0, ths, qs, twbs,&
                              qwbs, avgcprate, cprate, avgprec, prec, lspa, sno,&
                              cldefi, th10, q10, tshltr, pshltr, tshltr, albase,&
@@ -838,7 +849,7 @@ module post_gfs
 !              !$omp parallel do private(i,j)
 !              do j=jsta,jend
 !                do i=ista, iend
-!                  pint(i,j)=arrayr42d(i,j)
+!                  pint(i,j,lp1)=arrayr42d(i,j)
 !                enddo
 !              enddo
 !            endif
@@ -2172,8 +2183,8 @@ module post_gfs
               enddo
             endif
 
-! for GFDL MP
-            if (imp_physics == 11) then
+! for GFDL MP or Thompson MP 
+            if (imp_physics == 11 .or. imp_physics == 8) then
               ! model level cloud water mixing ratio
               if(trim(fieldname)=='clwmr') then
                 !$omp parallel do default(none) private(i,j,l) shared(lm,jsta,jend,ista,iend,qqw,arrayr43d)
@@ -2233,6 +2244,56 @@ module post_gfs
                   enddo
                 enddo
               endif
+
+              if(imp_physics == 8) then
+              ! model level rain number
+              if(trim(fieldname)=='ncrain') then
+                !$omp parallel do default(none) private(i,j,l) shared(lm,jsta,jend,ista,iend,qqnr,arrayr43d)
+                do l=1,lm
+                  do j=jsta,jend
+                    do i=ista, iend
+                      qqnr(i,j,l)=arrayr43d(i,j,l)
+                    enddo
+                  enddo
+                enddo
+              endif
+
+              ! model level rain number
+              if(trim(fieldname)=='ncice') then
+                !$omp parallel do default(none) private(i,j,l) shared(lm,jsta,jend,ista,iend,qqni,arrayr43d)
+                do l=1,lm
+                  do j=jsta,jend
+                    do i=ista, iend
+                      qqni(i,j,l)=arrayr43d(i,j,l)
+                    enddo
+                  enddo
+                enddo
+              endif
+
+              ! model level rain number
+              if(trim(fieldname)=='nwfa') then
+                !$omp parallel do default(none) private(i,j,l) shared(lm,jsta,jend,ista,iend,qqnwfa,arrayr43d)
+                do l=1,lm
+                  do j=jsta,jend
+                    do i=ista, iend
+                      qqnwfa(i,j,l)=arrayr43d(i,j,l)
+                    enddo
+                  enddo
+                enddo
+              endif
+
+              ! model level rain number
+              if(trim(fieldname)=='nifa') then
+                !$omp parallel do default(none) private(i,j,l) shared(lm,jsta,jend,ista,iend,qqnifa,arrayr43d)
+                do l=1,lm
+                  do j=jsta,jend
+                    do i=ista, iend
+                      qqnifa(i,j,l)=arrayr43d(i,j,l)
+                    enddo
+                  enddo
+                enddo
+              endif
+              endif !if(imp_physics == 8) then
 !gfdlmp
             endif
 
@@ -2390,8 +2451,8 @@ module post_gfs
         enddo
       enddo
 
-! compute cwm for gfdlmp
-      if(  imp_physics == 11 ) then
+! compute cwm for gfdlmp or Thompson 
+      if(  imp_physics == 11 .or. imp_physics == 8) then
         do l=1,lm
 !$omp parallel do default(none) private(i,j) shared(l,jsta,jend,ista,iend,cwm,qqg,qqs,qqr,qqi,qqw)
           do j=jsta,jend
@@ -2429,6 +2490,7 @@ module post_gfs
 ! hbot
       do j=jsta,jend
         do i=1,im
+          hbot(i,j) = spval
           if(pbot(i,j) < spval)then
             do l=lm,1,-1
               if(pbot(i,j) >= pmid(i,j,l)) then
