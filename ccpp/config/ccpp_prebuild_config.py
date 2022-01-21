@@ -109,6 +109,7 @@ SCHEME_FILES = [
     'physics/physics/GFS_rrtmg_pre.F90',
     'physics/physics/GFS_rrtmg_setup.F90',
     'physics/physics/GFS_stochastics.F90',
+    'physics/physics/GFS_stochastics_pre.F90',
     'physics/physics/GFS_suite_interstitial.F90',
     'physics/physics/GFS_surface_generic.F90',
     'physics/physics/GFS_surface_composites.F90',
