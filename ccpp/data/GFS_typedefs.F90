@@ -542,6 +542,7 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: sppt_wts  (:,:) => null()  !
     real (kind=kind_phys), pointer :: skebu_wts (:,:) => null()  !
     real (kind=kind_phys), pointer :: skebv_wts (:,:) => null()  !
+    real (kind=kind_phys), pointer :: pbl_wts   (:,:) => null()  !
     real (kind=kind_phys), pointer :: sfc_wts   (:,:) => null()  ! mg, sfc-perts
     real (kind=kind_phys), pointer :: zorl_wts  (:)   => null()  !
 
@@ -1165,6 +1166,7 @@ module GFS_typedefs
     logical              :: use_zmtnblck
     logical              :: do_shum
     logical              :: pert_zorl
+    logical              :: pert_pbl
     logical              :: do_skeb
     integer              :: skeb_npass
     integer              :: lndp_type
@@ -2987,9 +2989,13 @@ module GFS_typedefs
       Coupling%sppt_wts = clear_val
     endif
 
-    if (Model%pert_zorl ) then
+    !if (Model%pert_zorl ) then
       allocate (Coupling%zorl_wts  (IM))
       Coupling%zorl_wts = clear_val
+    !endif
+    if (Model%pert_pbl ) then
+      allocate (Coupling%pbl_wts  (IM,2))
+      Coupling%pbl_wts = clear_val
     endif
 
 
@@ -3572,6 +3578,7 @@ module GFS_typedefs
     logical :: do_shum      = .false.
     logical :: do_skeb      = .false.
     logical :: pert_zorl    = .false.
+    logical :: pert_pbl     = .false.
     integer :: skeb_npass   = 11
     integer :: lndp_type      = 0
     integer :: n_var_lndp     = 0
@@ -3664,7 +3671,7 @@ module GFS_typedefs
                                do_deep, jcap,                                               &
                                cs_parm, flgmin, cgwf, ccwf, cdmbgwd, sup, ctei_rm, crtrh,   &
                                dlqf, rbcr, shoc_parm, psauras, prauras, wminras,            &
-                               do_sppt, do_shum, do_skeb, pert_zorl,                        &
+                               do_sppt, do_shum, do_skeb, pert_zorl, pert_pbl,              &
                                lndp_type,  n_var_lndp, lndp_each_step,                      &
                                pert_mp,pert_clds,pert_radtend,                              &
                           !--- Rayleigh friction
@@ -4452,6 +4459,7 @@ module GFS_typedefs
     Model%use_zmtnblck     = use_zmtnblck
     Model%do_shum          = do_shum
     Model%pert_zorl        = pert_zorl
+    Model%pert_pbl         = pert_pbl
     Model%do_skeb          = do_skeb
     !--- stochastic surface perturbation options
     Model%lndp_type        = lndp_type
@@ -5888,6 +5896,7 @@ module GFS_typedefs
       print *, ' pert_radtend    : ', Model%pert_radtend
       print *, ' do_shum           : ', Model%do_shum
       print *, ' pert_zorl         : ', Model%pert_zorl
+      print *, ' pert_pbl          : ', Model%pert_pbl
       print *, ' do_skeb           : ', Model%do_skeb
       print *, ' do_skeb           : ', Model%do_skeb
       print *, ' lndp_type         : ', Model%lndp_type

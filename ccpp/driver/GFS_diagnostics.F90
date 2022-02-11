@@ -3089,6 +3089,54 @@ module GFS_diagnostics
 
     idx = idx + 1
     ExtDiag(idx)%axes = 2
+    ExtDiag(idx)%name = 'zorll'
+    ExtDiag(idx)%desc = 'land roughness'
+    ExtDiag(idx)%unit = 'm'
+    ExtDiag(idx)%mod_name = 'gfs_sfc'
+    ExtDiag(idx)%cnvfac = cn_one/cn_100
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var2 => sfcprop(nb)%zorll(:)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 2
+    ExtDiag(idx)%name = 'zorli'
+    ExtDiag(idx)%desc = 'ice roughness'
+    ExtDiag(idx)%unit = 'm'
+    ExtDiag(idx)%mod_name = 'gfs_sfc'
+    ExtDiag(idx)%cnvfac = cn_one/cn_100
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var2 => sfcprop(nb)%zorli(:)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 2
+    ExtDiag(idx)%name = 'zorlw'
+    ExtDiag(idx)%desc = 'ocean roughness'
+    ExtDiag(idx)%unit = 'm'
+    ExtDiag(idx)%mod_name = 'gfs_sfc'
+    ExtDiag(idx)%cnvfac = cn_one/cn_100
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var2 => sfcprop(nb)%zorlw(:)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 2
+    ExtDiag(idx)%name = 'zorlwav'
+    ExtDiag(idx)%desc = 'wave roughness'
+    ExtDiag(idx)%unit = 'm'
+    ExtDiag(idx)%mod_name = 'gfs_sfc'
+    ExtDiag(idx)%cnvfac = cn_one/cn_100
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var2 => sfcprop(nb)%zorlwav(:)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 2
     ExtDiag(idx)%name = 'vfracsfc'
     ExtDiag(idx)%desc = 'vegetation fraction'
     ExtDiag(idx)%unit = 'fraction'

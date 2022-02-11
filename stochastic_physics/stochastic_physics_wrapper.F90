@@ -13,6 +13,7 @@ module stochastic_physics_wrapper_mod
   real(kind=kind_phys), dimension(:,:,:), allocatable, save :: skebv_wts
   real(kind=kind_phys), dimension(:,:,:), allocatable, save :: sfc_wts
   real(kind=kind_phys), dimension(:,:),   allocatable, save :: zorl_wts
+  real(kind=kind_phys), dimension(:,:,:),   allocatable, save :: pbl_wts
 
   logical, save :: is_initialized = .false.
   integer, save :: lsoil = -999
@@ -97,7 +98,7 @@ module stochastic_physics_wrapper_mod
 
     initalize_stochastic_physics: if (.not. is_initialized) then
 
-      if (GFS_Control%do_sppt .OR. GFS_Control%do_shum .OR. GFS_Control%do_skeb .OR. (GFS_Control%lndp_type > 0) .OR. GFS_Control%pert_zorl ) then
+      if (GFS_Control%do_sppt .OR. GFS_Control%do_shum .OR. GFS_Control%do_skeb .OR. (GFS_Control%lndp_type > 0) .OR. GFS_Control%pert_zorl .OR. GFS_Control%pert_pbl) then
          allocate(xlat(1:nblks,maxblk))
          allocate(xlon(1:nblks,maxblk))
          do nb=1,nblks
@@ -107,7 +108,7 @@ module stochastic_physics_wrapper_mod
         ! Initialize stochastic physics
         call init_stochastic_physics(levs, GFS_Control%blksz, GFS_Control%dtp, GFS_Control%sppt_amp,                                  &
             GFS_Control%input_nml_file, GFS_Control%fn_nml, GFS_Control%nlunit, xlon, xlat, GFS_Control%do_sppt, GFS_Control%do_shum, &
-            GFS_Control%pert_zorl,                                                                                                    &
+            GFS_Control%pert_zorl, GFS_Control%pert_pbl,                                                                              &
             GFS_Control%do_skeb, GFS_Control%lndp_type, GFS_Control%n_var_lndp, GFS_Control%use_zmtnblck, GFS_Control%skeb_npass,     &
             GFS_Control%lndp_var_list, GFS_Control%lndp_prt_list,    &
             GFS_Control%ak, GFS_Control%bk, nthreads, GFS_Control%master, GFS_Control%communicator, ierr)
@@ -124,6 +125,9 @@ module stochastic_physics_wrapper_mod
       end if
       if (GFS_Control%pert_zorl) then
          allocate(zorl_wts(1:nblks,maxblk))
+      end if
+      if (GFS_Control%pert_pbl) then
+         allocate(pbl_wts(1:nblks,maxblk,2))
       end if
       if (GFS_Control%do_skeb) then
          allocate(skebu_wts(1:nblks,maxblk,1:levs))
@@ -159,7 +163,8 @@ module stochastic_physics_wrapper_mod
          allocate(sfc_wts(1:nblks, maxblk, GFS_Control%n_var_lndp))
          call run_stochastic_physics(levs, GFS_Control%kdt, GFS_Control%fhour, GFS_Control%blksz,       &
                                      sppt_wts=sppt_wts, shum_wts=shum_wts, skebu_wts=skebu_wts,         &
-                                     skebv_wts=skebv_wts, sfc_wts=sfc_wts, zorl_wts=zorl_wts, nthreads=nthreads)
+                                     skebv_wts=skebv_wts, sfc_wts=sfc_wts, zorl_wts=zorl_wts, pbl_wts=pbl_wts, &
+                                     nthreads=nthreads)
          ! Copy contiguous data back
          do nb=1,nblks
             GFS_Data(nb)%Coupling%sfc_wts(:,:) = sfc_wts(nb,1:GFS_Control%blksz(nb),:)
@@ -193,10 +198,10 @@ module stochastic_physics_wrapper_mod
       is_initialized = .true.
 
     else initalize_stochastic_physics
-      if (GFS_Control%do_sppt .OR. GFS_Control%do_shum .OR. GFS_Control%do_skeb .OR. (GFS_Control%lndp_type == 2) .OR. GFS_Control%pert_zorl ) then
+      if (GFS_Control%do_sppt .OR. GFS_Control%do_shum .OR. GFS_Control%do_skeb .OR. (GFS_Control%lndp_type == 2) .OR. GFS_Control%pert_zorl .OR. GFS_Control%pert_pbl ) then
          call run_stochastic_physics(levs, GFS_Control%kdt, GFS_Control%fhour, GFS_Control%blksz, &
                                  sppt_wts=sppt_wts, shum_wts=shum_wts, skebu_wts=skebu_wts, skebv_wts=skebv_wts, sfc_wts=sfc_wts, &
-                                 zorl_wts=zorl_wts, nthreads=nthreads)
+                                 zorl_wts=zorl_wts, pbl_wts=pbl_wts,nthreads=nthreads)
          ! Copy contiguous data back
          if (GFS_Control%do_sppt) then
             do nb=1,nblks
@@ -217,6 +222,11 @@ module stochastic_physics_wrapper_mod
          if (GFS_Control%pert_zorl) then
             do nb=1,nblks
                 GFS_Data(nb)%Coupling%zorl_wts(:) = zorl_wts(nb,1:GFS_Control%blksz(nb))
+            end do
+         end if
+         if (GFS_Control%pert_pbl) then
+            do nb=1,nblks
+                GFS_Data(nb)%Coupling%pbl_wts(:,:) = pbl_wts(nb,1:GFS_Control%blksz(nb),:)
             end do
          end if
          if (GFS_Control%lndp_type == 2) then ! save wts, and apply lndp scheme
@@ -357,7 +367,7 @@ module stochastic_physics_wrapper_mod
 
   type(GFS_control_type),   intent(inout) :: GFS_Control
 
-  if (GFS_Control%do_sppt .OR. GFS_Control%do_shum .OR. GFS_Control%do_skeb .OR. (GFS_Control%lndp_type > 0) .OR. GFS_Control%pert_zorl ) then
+  if (GFS_Control%do_sppt .OR. GFS_Control%do_shum .OR. GFS_Control%do_skeb .OR. (GFS_Control%lndp_type > 0) .OR. GFS_Control%pert_zorl .OR. GFS_Control%pert_pbl ) then
       if (allocated(xlat)) deallocate(xlat)
       if (allocated(xlon)) deallocate(xlon)
       if (GFS_Control%do_sppt) then
@@ -368,6 +378,9 @@ module stochastic_physics_wrapper_mod
       end if
       if (GFS_Control%pert_zorl) then
          if (allocated(zorl_wts)) deallocate(zorl_wts)
+      end if
+      if (GFS_Control%pert_pbl) then
+         if (allocated(pbl_wts)) deallocate(pbl_wts)
       end if
       if (GFS_Control%do_skeb) then
          if (allocated(skebu_wts)) deallocate(skebu_wts)

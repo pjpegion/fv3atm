@@ -1175,6 +1175,7 @@ module FV3GFS_io_mod
         Sfcprop(nb)%zorlw(ix)  = sfc_var2(i,j,37)   !--- zorlw (zorl on water portion of a cell)
         Sfcprop(nb)%zorll(ix)  = sfc_var2(i,j,38)   !--- zorll (zorl on land portion of a cell)
         Sfcprop(nb)%zorli(ix)  = sfc_var2(i,j,39)   !--- zorli (zorl on ice  portion of a cell)
+        Sfcprop(nb)%zorli_u(ix)  = sfc_var2(i,j,39)   !--- zorli (zorl on ice  portion of a cell)
         Sfcprop(nb)%albdirvis_lnd(ix) = sfc_var2(i,j,40)
         Sfcprop(nb)%albdirnir_lnd(ix) = sfc_var2(i,j,41)
         Sfcprop(nb)%albdifvis_lnd(ix) = sfc_var2(i,j,42)
@@ -1525,6 +1526,7 @@ module FV3GFS_io_mod
         do ix = 1, Atm_block%blksz(nb)
           if (Sfcprop(nb)%fice(ix)*(one-Sfcprop(nb)%landfrac(ix)) > zero) then
             Sfcprop(nb)%zorli(ix) = one
+            Sfcprop(nb)%zorli_u(ix) = one
           endif
         enddo
       enddo
