@@ -696,6 +696,20 @@
   dimensions = (horizontal_loop_extent)
   type = real
   kind = kind_phys
+[zorll_u]
+  standard_name = surface_roughness_length_over_land_unperturbed
+  long_name = surface roughness length over land unperturbed
+  units = cm
+  dimensions = (horizontal_loop_extent)
+  type = real
+  kind = kind_phys
+[zorli_u]
+  standard_name = surface_roughness_length_over_ice_unperturbed
+  long_name = surface roughness length over ice unperturbed
+  units = cm
+  dimensions = (horizontal_loop_extent)
+  type = real
+  kind = kind_phys
 [fice]
   standard_name = sea_ice_area_fraction_of_sea_area_fraction
   long_name = ice fraction over open water
@@ -2432,6 +2446,13 @@
   type = real
   kind = kind_phys
   active = (flag_for_stochastic_shum_option)
+[zorl_wts]
+  standard_name = zorl_weights_from_coupled_process
+  long_name = weights for stochastic roughness length perturbation
+  units = none
+  dimensions = (horizontal_loop_extent)
+  type = real
+  kind = kind_phys
 [sppt_wts]
   standard_name = sppt_weights_from_coupled_process
   long_name = weights for stochastic sppt perturbation
@@ -5029,6 +5050,12 @@
   dimensions = ()
   type = real
   kind = kind_phys
+[pert_zorl]
+  standard_name = flag_for_roughness_length_perturbations
+  long_name = flag for roughness length perturbations
+  units = flag
+  dimensions = ()
+  type = logical
 [do_sppt]
   standard_name = flag_for_stochastic_physics_perturbations
   long_name = flag for stochastic physics perturbations
@@ -6632,6 +6659,22 @@
   dimensions = (horizontal_loop_extent)
   type = real
   kind = kind_phys
+[dudtnp]
+  standard_name = tendency_of_zonal_wind_to_withold_from_sppt
+  long_name = uwnd change from physics that should not be perturbed by sppt
+  units = m s-2
+  dimensions = (horizontal_loop_extent,vertical_layer_dimension)
+  type = real
+  kind = kind_phys
+  active = (flag_for_stochastic_physics_perturbations .and. flag_for_roughness_length_perturbations)
+[dvdtnp]
+  standard_name = tendency_of_meridional_wind_to_withold_from_sppt
+  long_name = vwnd change from physics that should not be perturbed by sppt
+  units = m s-2
+  dimensions = (horizontal_loop_extent,vertical_layer_dimension)
+  type = real
+  kind = kind_phys
+  active = (flag_for_stochastic_physics_perturbations .and. flag_for_roughness_length_perturbations)
 [dtdtnp]
   standard_name = tendency_of_air_temperature_to_withold_from_sppt
   long_name = temp. change from physics that should not be perturbed by sppt
@@ -6640,6 +6683,14 @@
   type = real
   kind = kind_phys
   active = (flag_for_stochastic_physics_perturbations .or. flag_for_global_cellular_automata)
+[dqdtnp]
+  standard_name = tendency_of_tracers_to_withold_from_sppt
+  long_name = tracer change from physics that should not be perturbed by sppt
+  units = kg kg-1 s-1
+  dimensions = (horizontal_loop_extent,vertical_layer_dimension,number_of_tracers)
+  type = real
+  kind = kind_phys
+  active = (flag_for_stochastic_physics_perturbations .and. flag_for_roughness_length_perturbations)
 [drain_cpl]
   standard_name = tendency_of_lwe_thickness_of_rain_amount_on_dynamics_timestep_for_coupling
   long_name = change in rain_cpl (coupling_type)

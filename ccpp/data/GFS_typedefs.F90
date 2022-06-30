@@ -222,6 +222,8 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: zorll  (:)   => null()  !< land surface roughness in cm
     real (kind=kind_phys), pointer :: zorli  (:)   => null()  !< ice  surface roughness in cm
     real (kind=kind_phys), pointer :: zorlwav(:)   => null()  !< wave surface roughness in cm derived from wave model
+    real (kind=kind_phys), pointer :: zorll_u  (:)   => null()  !< land surface roughness in cm (un perturbed)
+    real (kind=kind_phys), pointer :: zorli_u  (:)   => null()  !< ice  surface roughness in cm (un perturbed)
     real (kind=kind_phys), pointer :: fice   (:)   => null()  !< ice fraction over open water grid
     real (kind=kind_phys), pointer :: snodl  (:)   => null()  !< snow depth over land
     real (kind=kind_phys), pointer :: weasdl (:)   => null()  !< weasd over land
@@ -537,6 +539,7 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: spp_wts_mp    (:,:) => null()  ! spp-mp-perts
     real (kind=kind_phys), pointer :: spp_wts_gwd   (:,:) => null()  ! spp-gwd-perts
     real (kind=kind_phys), pointer :: spp_wts_rad   (:,:) => null()  ! spp-rad-perts
+    real (kind=kind_phys), pointer :: zorl_wts  (:)   => null()  !
 
     !--- aerosol surface emissions for Thompson microphysics
     real (kind=kind_phys), pointer :: nwfa2d  (:)     => null()  !< instantaneous water-friendly sfc aerosol source
@@ -1210,6 +1213,7 @@ module GFS_typedefs
     logical              :: pert_mp
     logical              :: use_zmtnblck
     logical              :: do_shum
+    logical              :: pert_zorl
     logical              :: do_skeb
     integer              :: skeb_npass
     integer              :: lndp_type         ! integer indicating land perturbation scheme type:
@@ -1506,7 +1510,10 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: acvt     (:)     => null()  !< arrays used by cnvc90 top (cnvc90.f)
 
 !--- Stochastic physics properties calculated in physics_driver
-    real (kind=kind_phys), pointer :: dtdtnp    (:,:)  => null()  !< temperature change from physics that should not be perturbed with SPPT (k)
+    real (kind=kind_phys), pointer :: dudtnp    (:,:)  => null()  !< uwnd change from physics that should not be perturbed with SPPT (m/s**2)
+    real (kind=kind_phys), pointer :: dvdtnp    (:,:)  => null()  !< vwnd change from physics that should not be perturbed with SPPT (m/s**2)
+    real (kind=kind_phys), pointer :: dtdtnp    (:,:)  => null()  !< temperature change from physics that should not be perturbed with SPPT (k/s)
+    real (kind=kind_phys), pointer :: dqdtnp    (:,:,:)  => null()  !< tracer change from physics that should not be perturbed with SPPT (Kg/Kg/s)
     real (kind=kind_phys), pointer :: dtotprcp  (:)    => null()  !< change in totprcp  (diag_type)
     real (kind=kind_phys), pointer :: dcnvprcp  (:)    => null()  !< change in cnvprcp  (diag_type)
     real (kind=kind_phys), pointer :: drain_cpl (:)    => null()  !< change in rain_cpl (coupling_type)
@@ -2057,6 +2064,8 @@ module GFS_typedefs
     allocate (Sfcprop%zorll    (IM))
     allocate (Sfcprop%zorli    (IM))
     allocate (Sfcprop%zorlwav  (IM))
+    allocate (Sfcprop%zorll_u  (IM))
+    allocate (Sfcprop%zorli_u  (IM))
     allocate (Sfcprop%fice     (IM))
     allocate (Sfcprop%snodl    (IM))
     allocate (Sfcprop%weasdl   (IM))
@@ -2090,6 +2099,9 @@ module GFS_typedefs
     Sfcprop%zorll     = clear_val
     Sfcprop%zorli     = clear_val
     Sfcprop%zorlwav   = clear_val
+    Sfcprop%zorlw     = clear_val
+    Sfcprop%zorll_u   = clear_val
+    Sfcprop%zorli_u   = clear_val
     Sfcprop%fice      = clear_val
     Sfcprop%snodl     = clear_val
     Sfcprop%weasdl    = clear_val
@@ -2731,6 +2743,12 @@ module GFS_typedefs
       allocate (Coupling%sppt_wts  (IM,Model%levs))
       Coupling%sppt_wts = clear_val
     endif
+
+    if (Model%pert_zorl ) then
+      allocate (Coupling%zorl_wts  (IM))
+      Coupling%zorl_wts = clear_val
+    endif
+
 
     !--- stochastic shum option
     if (Model%do_shum) then
@@ -3381,6 +3399,7 @@ module GFS_typedefs
     logical :: use_zmtnblck = .false.
     logical :: do_shum      = .false.
     logical :: do_skeb      = .false.
+    logical :: pert_zorl    = .false.
     integer :: skeb_npass   = 11
     integer :: lndp_type      = 0
     integer :: n_var_lndp     = 0
@@ -3500,7 +3519,7 @@ module GFS_typedefs
                                do_deep, jcap,                                               &
                                cs_parm, flgmin, cgwf, ccwf, cdmbgwd, sup, ctei_rm, crtrh,   &
                                dlqf, rbcr, shoc_parm, psauras, prauras, wminras,            &
-                               do_sppt, do_shum, do_skeb,                                   &
+                               do_sppt, do_shum, do_skeb, pert_zorl,                        &
                                do_spp, n_var_spp,                                           &
                                lndp_type,  n_var_lndp,                                      &
                                pert_mp,pert_clds,pert_radtend,                              &
@@ -4335,6 +4354,7 @@ module GFS_typedefs
     Model%pert_radtend     = pert_radtend
     Model%use_zmtnblck     = use_zmtnblck
     Model%do_shum          = do_shum
+    Model%pert_zorl        = pert_zorl
     Model%do_skeb          = do_skeb
     !--- stochastic surface perturbation options
     Model%lndp_type        = lndp_type
@@ -5981,6 +6001,8 @@ module GFS_typedefs
       print *, ' pert_clds       : ', Model%pert_clds
       print *, ' pert_radtend    : ', Model%pert_radtend
       print *, ' do_shum           : ', Model%do_shum
+      print *, ' pert_zorl         : ', Model%pert_zorl
+      print *, ' do_skeb           : ', Model%do_skeb
       print *, ' do_skeb           : ', Model%do_skeb
       print *, ' lndp_type         : ', Model%lndp_type
       print *, ' n_var_lndp        : ', Model%n_var_lndp
@@ -6255,9 +6277,15 @@ module GFS_typedefs
       allocate (Tbd%dtdtnp    (IM,Model%levs))
       allocate (Tbd%dtotprcp  (IM))
       allocate (Tbd%dcnvprcp  (IM))
+      allocate (Tbd%dudtnp    (IM,Model%levs))
+      allocate (Tbd%dvdtnp    (IM,Model%levs))
+      allocate (Tbd%dqdtnp    (IM,Model%levs,Model%ntrac))
       Tbd%dtdtnp    = clear_val
       Tbd%dtotprcp  = clear_val
       Tbd%dcnvprcp  = clear_val
+      Tbd%dudtnp    = clear_val
+      Tbd%dvdtnp    = clear_val
+      Tbd%dqdtnp    = clear_val
     endif
 
     allocate (Tbd%phy_f2d  (IM,Model%ntot2d))

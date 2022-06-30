@@ -281,7 +281,7 @@ subroutine update_atmos_radiation_physics (Atmos)
       if (ierr/=0)  call mpp_error(FATAL, 'Call to CCPP timestep_init step failed')
 
       if (GFS_Control%do_sppt .or. GFS_Control%do_shum .or. GFS_Control%do_skeb .or. &
-          GFS_Control%lndp_type > 0  .or. GFS_Control%do_ca .or. GFS_Control%do_spp) then
+          GFS_Control%lndp_type > 0  .or. GFS_Control%do_ca .or. GFS_Control%do_spp .or. GFS_Control%pert_zorl ) then
 !--- call stochastic physics pattern generation / cellular automata
         call stochastic_physics_wrapper(GFS_control, GFS_data, Atm_block, ierr)
         if (ierr/=0)  call mpp_error(FATAL, 'Call to stochastic_physics_wrapper failed')
@@ -361,6 +361,20 @@ subroutine update_atmos_radiation_physics (Atmos)
         if (mpp_pe() == mpp_root_pe()) print *,'RADIATION STEP  ', GFS_control%kdt, GFS_control%fhour
         call FV3GFS_GFS_checksum(GFS_control, GFS_data, Atm_block)
       endif
+
+      if (GFS_Control%pert_zorl) then
+
+        if (mpp_pe() == mpp_root_pe() .and. debug) write(6,*) "stochastic pre-physics driver"
+
+!--- execute the atmospheric physics step2 subcomponent (stochastic physics driver)
+
+        call mpp_clock_begin(physClock)
+        call CCPP_step (step="stoch_pre", nblks=Atm_block%nblks, ierr=ierr)
+        if (ierr/=0)  call mpp_error(FATAL, 'Call to CCPP stoch_pre step failed')
+        call mpp_clock_end(physClock)
+
+      endif
+
 
       if (mpp_pe() == mpp_root_pe() .and. debug) write(6,*) "physics driver"
 
@@ -750,7 +764,7 @@ subroutine atmos_model_init (Atmos, Time_init, Time, Time_step)
    if (ierr/=0)  call mpp_error(FATAL, 'Call to CCPP physics_init step failed')
 
    if (GFS_Control%do_sppt .or. GFS_Control%do_shum .or. GFS_Control%do_skeb .or. &
-       GFS_Control%lndp_type > 0  .or. GFS_Control%do_ca .or. GFS_Control%do_spp) then
+       GFS_Control%lndp_type > 0  .or. GFS_Control%do_ca .or. GFS_Control%do_spp .or. GFS_Control%pert_zorl) then
 
 !--- Initialize stochastic physics pattern generation / cellular automata for first time step
      call stochastic_physics_wrapper(GFS_control, GFS_data, Atm_block, ierr)
@@ -1039,7 +1053,7 @@ subroutine atmos_model_end (Atmos)
 !     call write_stoch_restart_atm('RESTART/atm_stoch.res.nc')
     endif
     if (GFS_Control%do_sppt .or. GFS_Control%do_shum .or. GFS_Control%do_skeb .or. &
-        GFS_Control%lndp_type > 0  .or. GFS_Control%do_ca .or. GFS_Control%do_spp) then
+        GFS_Control%lndp_type > 0  .or. GFS_Control%do_ca .or. GFS_Control%do_spp .or.  GFS_Control%pert_zorl) then
       if(restart_endfcst) then
         call write_stoch_restart_atm('RESTART/atm_stoch.res.nc')
         if (GFS_control%do_ca)then
@@ -2735,6 +2749,7 @@ end subroutine update_atmos_chemistry
               GFS_data(nb)%Coupling%hsnoin_cpl(ix) = min(hsmax, GFS_data(nb)%Coupling%hsnoin_cpl(ix) &
                                                               / GFS_data(nb)%Sfcprop%fice(ix))
               GFS_data(nb)%Sfcprop%zorli(ix)       = z0ice
+              GFS_data(nb)%Sfcprop%zorli_u(ix)       = z0ice
               tem = GFS_data(nb)%Sfcprop%tisfc(ix) * GFS_data(nb)%Sfcprop%tisfc(ix)
               tem = con_sbc * tem * tem
               if (GFS_data(nb)%Coupling%ulwsfcin_cpl(ix) > zero) then

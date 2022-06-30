@@ -2302,11 +2302,24 @@ module GFS_diagnostics
       ExtDiag(idx)%axes = 3
       ExtDiag(idx)%name = 'shum_wts'
       ExtDiag(idx)%desc = 'perturbation velocity'
-      ExtDiag(idx)%unit = 'm/s'
+      ExtDiag(idx)%unit = 'none'
       ExtDiag(idx)%mod_name = 'gfs_phys'
       allocate (ExtDiag(idx)%data(nblks))
       do nb = 1,nblks
         ExtDiag(idx)%data(nb)%var3 => Coupling(nb)%shum_wts(:,:)
+      enddo
+    endif
+
+    if (Model%pert_zorl) then
+      idx = idx + 1
+      ExtDiag(idx)%axes = 2
+      ExtDiag(idx)%name = 'zorl_wts'
+      ExtDiag(idx)%desc = 'perturbation velocity'
+      ExtDiag(idx)%unit = 'none'
+      ExtDiag(idx)%mod_name = 'gfs_phys'
+      allocate (ExtDiag(idx)%data(nblks))
+      do nb = 1,nblks
+        ExtDiag(idx)%data(nb)%var2 => Coupling(nb)%zorl_wts(:)
       enddo
     endif
 
