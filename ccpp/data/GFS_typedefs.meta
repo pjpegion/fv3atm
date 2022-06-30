@@ -2453,6 +2453,14 @@
   dimensions = (horizontal_loop_extent)
   type = real
   kind = kind_phys
+[pbl_wts]
+  standard_name = pbl_weights_from_coupled_process
+  long_name = weights for stochastic TKE dissipation and generation perturbation
+  units = none
+  dimensions = (horizontal_loop_extent,2)
+  type = real
+  kind = kind_phys
+  active = (flag_for_pbl_tke_perturbations)
 [sppt_wts]
   standard_name = sppt_weights_from_coupled_process
   long_name = weights for stochastic sppt perturbation
@@ -5053,6 +5061,12 @@
 [pert_zorl]
   standard_name = flag_for_roughness_length_perturbations
   long_name = flag for roughness length perturbations
+  units = flag
+  dimensions = ()
+  type = logical
+[pert_pbl]
+  standard_name = flag_for_pbl_tke_perturbations
+  long_name = flag for TKE generation and dissipation perturbations
   units = flag
   dimensions = ()
   type = logical

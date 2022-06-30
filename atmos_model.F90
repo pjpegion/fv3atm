@@ -362,7 +362,7 @@ subroutine update_atmos_radiation_physics (Atmos)
         call FV3GFS_GFS_checksum(GFS_control, GFS_data, Atm_block)
       endif
 
-      if (GFS_Control%pert_zorl) then
+      !if (GFS_Control%pert_zorl) then
 
         if (mpp_pe() == mpp_root_pe() .and. debug) write(6,*) "stochastic pre-physics driver"
 
@@ -373,7 +373,7 @@ subroutine update_atmos_radiation_physics (Atmos)
         if (ierr/=0)  call mpp_error(FATAL, 'Call to CCPP stoch_pre step failed')
         call mpp_clock_end(physClock)
 
-      endif
+      !endif
 
 
       if (mpp_pe() == mpp_root_pe() .and. debug) write(6,*) "physics driver"
