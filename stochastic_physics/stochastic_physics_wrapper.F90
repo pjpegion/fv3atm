@@ -185,7 +185,8 @@ module stochastic_physics_wrapper_mod
          allocate(sfc_wts(1:nblks, maxblk, GFS_Control%n_var_lndp))
          call run_stochastic_physics(levs, GFS_Control%kdt, GFS_Control%fhour, GFS_Control%blksz,       &
                                      sppt_wts=sppt_wts, shum_wts=shum_wts, skebu_wts=skebu_wts,         &
-                                     spp_wts=spp_wts, zorl_wts=zorl_wts, pbl_wts=pbl_wts, nthreads=nthreads)
+                                     skebv_wts=skebv_wts ,sfc_wts=sfc_wts, spp_wts=spp_wts,             &
+                                     zorl_wts=zorl_wts, pbl_wts=pbl_wts, nthreads=nthreads)
          ! Copy contiguous data back
          do nb=1,nblks
             GFS_Data(nb)%Coupling%sfc_wts(:,:) = sfc_wts(nb,1:GFS_Control%blksz(nb),:)
@@ -216,9 +217,10 @@ module stochastic_physics_wrapper_mod
     else initalize_stochastic_physics
       if (GFS_Control%do_sppt .OR. GFS_Control%do_shum .OR. GFS_Control%do_skeb .OR. (GFS_Control%lndp_type == 2) &
          .OR. GFS_Control%do_spp .OR. GFS_Control%pert_zorl .OR.  GFS_Control%pert_pbl) then
-         call run_stochastic_physics(levs, GFS_Control%kdt, GFS_Control%fhour, GFS_Control%blksz, &
-                                 sppt_wts=sppt_wts, shum_wts=shum_wts, skebu_wts=skebu_wts, skebv_wts=skebv_wts, sfc_wts=sfc_wts, &
-                                 spp_wts=spp_wts, zorl_wts=zorl_wts, pbl_wts=pbl_wts,nthreads=nthreads)
+         call run_stochastic_physics(levs, GFS_Control%kdt, GFS_Control%fhour, GFS_Control%blksz,       &
+                                     sppt_wts=sppt_wts, shum_wts=shum_wts, skebu_wts=skebu_wts,         &
+                                     skebv_wts=skebv_wts ,sfc_wts=sfc_wts, spp_wts=spp_wts,             &
+                                     zorl_wts=zorl_wts, pbl_wts=pbl_wts, nthreads=nthreads)
          ! Copy contiguous data back
          if (GFS_Control%do_sppt) then
             do nb=1,nblks

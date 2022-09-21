@@ -2283,6 +2283,149 @@ module GFS_diagnostics
     do nb = 1,nblks
       ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%refdmax263k(:)
     enddo
+! inputs for SCM
+    idx = idx + 1
+    ExtDiag(idx)%axes = 3
+    ExtDiag(idx)%name = 't_in'
+    ExtDiag(idx)%desc = 'temperature'
+    ExtDiag(idx)%unit = 'K'
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var3 => Statein(nb)%tgrs(:,:)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 3
+    ExtDiag(idx)%name = 'u_in'
+    ExtDiag(idx)%desc = 'zonal wind'
+    ExtDiag(idx)%unit = 'm/s'
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var3 => Statein(nb)%ugrs(:,:)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 3
+    ExtDiag(idx)%name = 'v_in'
+    ExtDiag(idx)%desc = 'meridional wind'
+    ExtDiag(idx)%unit = 'm/s'
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var3 => Statein(nb)%vgrs(:,:)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 3
+    ExtDiag(idx)%name = 'qv_in'
+    ExtDiag(idx)%desc = 'specific humidity'
+    ExtDiag(idx)%unit = 'kg/kg'
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var3 => Statein(nb)%qgrs(:,:,1)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 3
+    ExtDiag(idx)%name = 'ql_in'
+    ExtDiag(idx)%desc = 'cloud water mixing ratio'
+    ExtDiag(idx)%unit = 'kg/kg'
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var3 => Statein(nb)%qgrs(:,:,2)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 3
+    ExtDiag(idx)%name = 'qi_in'
+    ExtDiag(idx)%desc = 'cloud ice mixing ratio'
+    ExtDiag(idx)%unit = 'kg/kg'
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var3 => Statein(nb)%qgrs(:,:,3)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 3
+    ExtDiag(idx)%name = 'qr_in'
+    ExtDiag(idx)%desc = 'rain water mixing ratio'
+    ExtDiag(idx)%unit = 'kg/kg'
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var3 => Statein(nb)%qgrs(:,:,4)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 3
+    ExtDiag(idx)%name = 'qs_in'
+    ExtDiag(idx)%desc = 'snow water mixing ratio'
+    ExtDiag(idx)%unit = 'kg/kg'
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var3 => Statein(nb)%qgrs(:,:,5)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 3
+    ExtDiag(idx)%name = 'qg_in'
+    ExtDiag(idx)%desc = 'graupel mixing ratio'
+    ExtDiag(idx)%unit = 'kg/kg'
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var3 => Statein(nb)%qgrs(:,:,6)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 3
+    ExtDiag(idx)%name = 'ice_nc_in'
+    ExtDiag(idx)%desc = 'cloud ice water number concentration'
+    ExtDiag(idx)%unit = '/kg'
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var3 => Statein(nb)%qgrs(:,:,7)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 3
+    ExtDiag(idx)%name = 'rain_nc_in'
+    ExtDiag(idx)%desc = 'rain number concentration'
+    ExtDiag(idx)%unit = '/kg'
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var3 => Statein(nb)%qgrs(:,:,8)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 3
+    ExtDiag(idx)%name = 'o3_in'
+    ExtDiag(idx)%desc = 'ozone mixing ratio'
+    ExtDiag(idx)%unit = 'kg/kg'
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var3 => Statein(nb)%qgrs(:,:,9)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 3
+    ExtDiag(idx)%name = 'tke_in'
+    ExtDiag(idx)%desc = 'subgrid scale turbulent kinetic energy'
+    ExtDiag(idx)%unit = 'm2/s2'
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var3 => Statein(nb)%qgrs(:,:,10)
+    enddo
 
     if (Model%do_sppt .or. Model%ca_global) then
       idx = idx + 1
@@ -2295,7 +2438,27 @@ module GFS_diagnostics
       do nb = 1,nblks
         ExtDiag(idx)%data(nb)%var3 => Coupling(nb)%sppt_wts(:,:)
       enddo
+      idx = idx + 1
+      ExtDiag(idx)%axes = 3
+      ExtDiag(idx)%name = 'dtdt_rad_pert'
+      ExtDiag(idx)%desc = 'perturbation velocity'
+      ExtDiag(idx)%unit = 'm/s'
+      ExtDiag(idx)%mod_name = 'gfs_phys'
+      allocate (ExtDiag(idx)%data(nblks))
+      do nb = 1,nblks
+        ExtDiag(idx)%data(nb)%var3 => Tbd(nb)%dtdtp(:,:)
+      enddo
     endif
+    idx = idx + 1
+    ExtDiag(idx)%axes = 3
+    ExtDiag(idx)%name = 'dtdt_rad_pert'
+    ExtDiag(idx)%desc = 'perturbation velocity'
+    ExtDiag(idx)%unit = 'm/s'
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var3 => Tbd(nb)%dtdtnp(:,:)
+    enddo
 
     if (Model%do_shum) then
       idx = idx + 1

@@ -1515,6 +1515,7 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: dudtnp    (:,:)  => null()  !< uwnd change from physics that should not be perturbed with SPPT (m/s**2)
     real (kind=kind_phys), pointer :: dvdtnp    (:,:)  => null()  !< vwnd change from physics that should not be perturbed with SPPT (m/s**2)
     real (kind=kind_phys), pointer :: dtdtnp    (:,:)  => null()  !< temperature change from physics that should not be perturbed with SPPT (k/s)
+    real (kind=kind_phys), pointer :: dtdtp    (:,:)  => null()  !< temperature change from physics that should be perturbed with SPPT (k/s)
     real (kind=kind_phys), pointer :: dqdtnp    (:,:,:)  => null()  !< tracer change from physics that should not be perturbed with SPPT (Kg/Kg/s)
     real (kind=kind_phys), pointer :: dtotprcp  (:)    => null()  !< change in totprcp  (diag_type)
     real (kind=kind_phys), pointer :: dcnvprcp  (:)    => null()  !< change in cnvprcp  (diag_type)
@@ -6282,16 +6283,18 @@ module GFS_typedefs
       Tbd%dsnow_cpl = clear_val
     endif
 
+    allocate (Tbd%dtdtnp    (IM,Model%levs))
+    Tbd%dtdtnp    = clear_val
     if (Model%do_sppt .or. Model%ca_global) then
-      allocate (Tbd%dtdtnp    (IM,Model%levs))
+      allocate (Tbd%dtdtp    (IM,Model%levs))
       allocate (Tbd%dtotprcp  (IM))
       allocate (Tbd%dcnvprcp  (IM))
       allocate (Tbd%dudtnp    (IM,Model%levs))
       allocate (Tbd%dvdtnp    (IM,Model%levs))
       allocate (Tbd%dqdtnp    (IM,Model%levs,Model%ntrac))
-      Tbd%dtdtnp    = clear_val
       Tbd%dtotprcp  = clear_val
       Tbd%dcnvprcp  = clear_val
+      Tbd%dtdtnp    = clear_val
       Tbd%dudtnp    = clear_val
       Tbd%dvdtnp    = clear_val
       Tbd%dqdtnp    = clear_val

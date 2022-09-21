@@ -6697,6 +6697,14 @@
   type = real
   kind = kind_phys
   active = (flag_for_stochastic_physics_perturbations .or. flag_for_global_cellular_automata)
+[dtdtp]
+  standard_name = tendency_of_air_temperature_to_perturb_for_sppt
+  long_name = temp. change from physics that should  be perturbed by sppt
+  units = K s-1
+  dimensions = (horizontal_loop_extent,vertical_layer_dimension)
+  type = real
+  kind = kind_phys
+  active = (flag_for_stochastic_physics_perturbations .or. flag_for_global_cellular_automata)
 [dqdtnp]
   standard_name = tendency_of_tracers_to_withold_from_sppt
   long_name = tracer change from physics that should not be perturbed by sppt

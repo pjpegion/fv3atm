@@ -24,6 +24,11 @@
       <scheme>GFS_rrtmg_post</scheme>
     </subcycle>
   </group>
+  <group name="stoch_pre">
+    <subcycle loop="1">
+      <scheme>GFS_stochastics_pre</scheme>
+    </subcycle>
+  </group>
   <group name="physics">
     <subcycle loop="1">
       <scheme>GFS_suite_interstitial_phys_reset</scheme>
