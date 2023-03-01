@@ -160,7 +160,7 @@ module CCPP_driver
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     ! Radiation, physics and and stochastic physics - threaded regions using blocked data structures
-    else if (trim(step)=="radiation" .or. trim(step)=="physics" .or. trim(step)=="stochastics" .or. trim(step)=="stoch_pre") then
+    else if (trim(step)=="radiation" .or. trim(step)=="physics" .or. trim(step)=="stochastics" ) then
 
       ! Set number of threads available to physics schemes to one,
       ! because threads are used on the host model side for blocking

@@ -375,6 +375,8 @@ module post_fv3
         lonlast  = nint(wrt_int_state%lonlast*gdsdegr)
         latstart = nint(wrt_int_state%latstart*gdsdegr)
         latlast  = nint(wrt_int_state%latlast*gdsdegr)
+        dxval = dlon(grid_id)*gdsdegr
+        dyval = dlat(grid_id)*gdsdegr
       else if(trim(output_grid(grid_id)) == 'global_latlon') then
         MAPTYPE=0
         gridtype='A'
@@ -383,6 +385,8 @@ module post_fv3
         lonlast  = nint(wrt_int_state%lonlast*gdsdegr)
         latstart = nint(wrt_int_state%latstart*gdsdegr)
         latlast  = nint(wrt_int_state%latlast*gdsdegr)
+        dxval = dlon(grid_id)*gdsdegr
+        dyval = dlat(grid_id)*gdsdegr
       endif
 
 ! look at the field bundle attributes

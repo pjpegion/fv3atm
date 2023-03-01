@@ -696,6 +696,13 @@
   dimensions = (horizontal_loop_extent)
   type = real
   kind = kind_phys
+[zorlw_u]
+  standard_name = surface_roughness_length_over_water_unperturbed
+  long_name = surface roughness length over water unperturbed
+  units = cm
+  dimensions = (horizontal_loop_extent)
+  type = real
+  kind = kind_phys
 [zorll_u]
   standard_name = surface_roughness_length_over_land_unperturbed
   long_name = surface roughness length over land unperturbed
@@ -2446,21 +2453,6 @@
   type = real
   kind = kind_phys
   active = (flag_for_stochastic_shum_option)
-[zorl_wts]
-  standard_name = zorl_weights_from_coupled_process
-  long_name = weights for stochastic roughness length perturbation
-  units = none
-  dimensions = (horizontal_loop_extent)
-  type = real
-  kind = kind_phys
-[pbl_wts]
-  standard_name = pbl_weights_from_coupled_process
-  long_name = weights for stochastic TKE dissipation and generation perturbation
-  units = none
-  dimensions = (horizontal_loop_extent,2)
-  type = real
-  kind = kind_phys
-  active = (flag_for_pbl_tke_perturbations)
 [sppt_wts]
   standard_name = sppt_weights_from_coupled_process
   long_name = weights for stochastic sppt perturbation
@@ -2492,15 +2484,15 @@
   dimensions = (horizontal_loop_extent,vertical_layer_dimension)
   type = real
   kind = kind_phys
-  active = (do_stochastically_perturbed_parameterizations)
+  active = (do_stochastically_perturbed_parameterizations .or. flag_for_coupled_stochastic_physics_perturbations)
 [spp_wts_sfc]
   standard_name = spp_weights_for_surface_layer_scheme 
   long_name = spp weights for surface layer scheme
   units = 1
-  dimensions = (horizontal_loop_extent,vertical_layer_dimension)
+  dimensions = (horizontal_loop_extent)
   type = real
   kind = kind_phys
-  active = (do_stochastically_perturbed_parameterizations)
+  active = (do_stochastically_perturbed_parameterizations .or. flag_for_coupled_stochastic_physics_perturbations)
 [spp_wts_mp]
   standard_name = spp_weights_for_microphysics_scheme
   long_name = spp weights for microphysics scheme 
@@ -5058,21 +5050,15 @@
   dimensions = ()
   type = real
   kind = kind_phys
-[pert_zorl]
-  standard_name = flag_for_roughness_length_perturbations
-  long_name = flag for roughness length perturbations
-  units = flag
-  dimensions = ()
-  type = logical
-[pert_pbl]
-  standard_name = flag_for_pbl_tke_perturbations
-  long_name = flag for TKE generation and dissipation perturbations
-  units = flag
-  dimensions = ()
-  type = logical
 [do_sppt]
   standard_name = flag_for_stochastic_physics_perturbations
   long_name = flag for stochastic physics perturbations
+  units = flag
+  dimensions = ()
+  type = logical
+[do_newsppt]
+  standard_name = flag_for_coupled_stochastic_physics_perturbations
+  long_name = flag for stochastic physics perturbations for coupeld model
   units = flag
   dimensions = ()
   type = logical
@@ -6770,7 +6756,7 @@
   dimensions = (horizontal_loop_extent,vertical_layer_dimension)
   type = real
   kind = kind_phys
-  active = (flag_for_stochastic_physics_perturbations .and. flag_for_roughness_length_perturbations)
+  active = (flag_for_stochastic_physics_perturbations .and. control_for_pbl_spp_perturbations == 2)
 [dvdtnp]
   standard_name = tendency_of_meridional_wind_to_withold_from_sppt
   long_name = vwnd change from physics that should not be perturbed by sppt
@@ -6778,7 +6764,7 @@
   dimensions = (horizontal_loop_extent,vertical_layer_dimension)
   type = real
   kind = kind_phys
-  active = (flag_for_stochastic_physics_perturbations .and. flag_for_roughness_length_perturbations)
+  active = (flag_for_stochastic_physics_perturbations .and. control_for_pbl_spp_perturbations == 2)
 [dtdtnp]
   standard_name = tendency_of_air_temperature_to_withold_from_sppt
   long_name = temp. change from physics that should not be perturbed by sppt
@@ -6802,7 +6788,7 @@
   dimensions = (horizontal_loop_extent,vertical_layer_dimension,number_of_tracers)
   type = real
   kind = kind_phys
-  active = (flag_for_stochastic_physics_perturbations .and. flag_for_roughness_length_perturbations)
+  active = (flag_for_stochastic_physics_perturbations .and. control_for_pbl_spp_perturbations == 2)
 [drain_cpl]
   standard_name = tendency_of_lwe_thickness_of_rain_amount_on_dynamics_timestep_for_coupling
   long_name = change in rain_cpl (coupling_type)

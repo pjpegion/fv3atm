@@ -222,6 +222,7 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: zorll  (:)   => null()  !< land surface roughness in cm
     real (kind=kind_phys), pointer :: zorli  (:)   => null()  !< ice  surface roughness in cm
     real (kind=kind_phys), pointer :: zorlwav(:)   => null()  !< wave surface roughness in cm derived from wave model
+    real (kind=kind_phys), pointer :: zorlw_u  (:)   => null()  !< water surface roughness in cm (un perturbed)
     real (kind=kind_phys), pointer :: zorll_u  (:)   => null()  !< land surface roughness in cm (un perturbed)
     real (kind=kind_phys), pointer :: zorli_u  (:)   => null()  !< ice  surface roughness in cm (un perturbed)
     real (kind=kind_phys), pointer :: fice   (:)   => null()  !< ice fraction over open water grid
@@ -536,7 +537,7 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: pbl_wts   (:,:) => null()  !
     real (kind=kind_phys), pointer :: sfc_wts   (:,:) => null()  ! mg, sfc-perts
     real (kind=kind_phys), pointer :: spp_wts_pbl   (:,:) => null()  ! spp-pbl-perts
-    real (kind=kind_phys), pointer :: spp_wts_sfc   (:,:) => null()  ! spp-sfc-perts
+    real (kind=kind_phys), pointer :: spp_wts_sfc   (:) => null()  ! spp-sfc-perts
     real (kind=kind_phys), pointer :: spp_wts_mp    (:,:) => null()  ! spp-mp-perts
     real (kind=kind_phys), pointer :: spp_wts_gwd   (:,:) => null()  ! spp-gwd-perts
     real (kind=kind_phys), pointer :: spp_wts_rad   (:,:) => null()  ! spp-rad-perts
@@ -1209,13 +1210,12 @@ module GFS_typedefs
 
 !--- stochastic physics control parameters
     logical              :: do_sppt
+    logical              :: do_newsppt ! hybrid SPPT- SPPT for coupled model
     logical              :: pert_clds
     logical              :: pert_radtend
     logical              :: pert_mp
     logical              :: use_zmtnblck
     logical              :: do_shum
-    logical              :: pert_zorl
-    logical              :: pert_pbl
     logical              :: do_skeb
     integer              :: skeb_npass
     integer              :: lndp_type         ! integer indicating land perturbation scheme type:
@@ -2083,6 +2083,7 @@ module GFS_typedefs
     allocate (Sfcprop%zorli    (IM))
     allocate (Sfcprop%zorlwav  (IM))
     allocate (Sfcprop%zorll_u  (IM))
+    allocate (Sfcprop%zorlw_u  (IM))
     allocate (Sfcprop%zorli_u  (IM))
     allocate (Sfcprop%fice     (IM))
     allocate (Sfcprop%snodl    (IM))
@@ -2119,6 +2120,7 @@ module GFS_typedefs
     Sfcprop%zorlwav   = clear_val
     Sfcprop%zorlw     = clear_val
     Sfcprop%zorll_u   = clear_val
+    Sfcprop%zorlw_u   = clear_val
     Sfcprop%zorli_u   = clear_val
     Sfcprop%fice      = clear_val
     Sfcprop%snodl     = clear_val
@@ -2762,16 +2764,6 @@ module GFS_typedefs
       Coupling%sppt_wts = clear_val
     endif
 
-    !if (Model%pert_zorl ) then
-      allocate (Coupling%zorl_wts  (IM))
-      Coupling%zorl_wts = clear_val
-    !endif
-    if (Model%pert_pbl ) then
-      allocate (Coupling%pbl_wts  (IM,2))
-      Coupling%pbl_wts = clear_val
-    endif
-
-
     !--- stochastic shum option
     if (Model%do_shum) then
       allocate (Coupling%shum_wts  (IM,Model%levs))
@@ -2794,17 +2786,19 @@ module GFS_typedefs
     endif
     
     !--- stochastic spp perturbation option
-    if (Model%do_spp) then
+    if (Model%do_spp .OR. Model%do_newsppt) then
       allocate (Coupling%spp_wts_pbl  (IM,Model%levs))
       Coupling%spp_wts_pbl = clear_val
-      allocate (Coupling%spp_wts_sfc  (IM,Model%levs))
+      allocate (Coupling%spp_wts_sfc  (IM))
       Coupling%spp_wts_sfc = clear_val
-      allocate (Coupling%spp_wts_mp   (IM,Model%levs))
-      Coupling%spp_wts_mp = clear_val
-      allocate (Coupling%spp_wts_gwd   (IM,Model%levs))
-      Coupling%spp_wts_gwd = clear_val
-      allocate (Coupling%spp_wts_rad   (IM,Model%levs))
-      Coupling%spp_wts_rad = clear_val
+      !if (.NOT. Model%do_newsppt ) then ! only activaute these of doing GSL SPP
+         allocate (Coupling%spp_wts_mp   (IM,Model%levs))
+         Coupling%spp_wts_mp = clear_val
+         allocate (Coupling%spp_wts_gwd   (IM,Model%levs))
+         Coupling%spp_wts_gwd = clear_val
+         allocate (Coupling%spp_wts_rad   (IM,Model%levs))
+         Coupling%spp_wts_rad = clear_val
+      ! endif
     endif
 
     !--- needed for Thompson's aerosol option
@@ -3421,14 +3415,13 @@ module GFS_typedefs
 
 !--- stochastic physics control parameters
     logical :: do_sppt      = .false.
+    logical :: do_newsppt   = .false.
     logical :: pert_mp      = .false.
     logical :: pert_clds    = .false.
     logical :: pert_radtend = .true.
     logical :: use_zmtnblck = .false.
     logical :: do_shum      = .false.
     logical :: do_skeb      = .false.
-    logical :: pert_zorl    = .false.
-    logical :: pert_pbl     = .false.
     integer :: skeb_npass   = 11
     integer :: lndp_type      = 0
     integer :: n_var_lndp     = 0
@@ -3549,7 +3542,7 @@ module GFS_typedefs
                                do_deep, jcap,                                               &
                                cs_parm, flgmin, cgwf, ccwf, cdmbgwd, sup, ctei_rm, crtrh,   &
                                dlqf, rbcr, shoc_parm, psauras, prauras, wminras,            &
-                               do_sppt, do_shum, do_skeb, pert_zorl, pert_pbl,              &
+                               do_sppt, do_shum, do_skeb, do_newsppt,                       &
                                do_spp, n_var_spp,                                           &
                                lndp_type,  n_var_lndp,                                      &
                                pert_mp,pert_clds,pert_radtend,                              &
@@ -4386,8 +4379,7 @@ module GFS_typedefs
     Model%pert_radtend     = pert_radtend
     Model%use_zmtnblck     = use_zmtnblck
     Model%do_shum          = do_shum
-    Model%pert_zorl        = pert_zorl
-    Model%pert_pbl         = pert_pbl
+    Model%do_newsppt       = do_newsppt
     Model%do_skeb          = do_skeb
     !--- stochastic surface perturbation options
     Model%lndp_type        = lndp_type
@@ -6064,10 +6056,8 @@ module GFS_typedefs
       print *, ' pert_clds       : ', Model%pert_clds
       print *, ' pert_radtend    : ', Model%pert_radtend
       print *, ' do_shum           : ', Model%do_shum
-      print *, ' pert_zorl         : ', Model%pert_zorl
-      print *, ' pert_pbl          : ', Model%pert_pbl
       print *, ' do_skeb           : ', Model%do_skeb
-      print *, ' do_skeb           : ', Model%do_skeb
+      print *, ' do_newsppt        : ', Model%do_newsppt
       print *, ' lndp_type         : ', Model%lndp_type
       print *, ' n_var_lndp        : ', Model%n_var_lndp
       print *, ' do_spp            : ', Model%do_spp
