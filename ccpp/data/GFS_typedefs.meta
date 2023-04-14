@@ -5297,6 +5297,12 @@
   units = flag
   dimensions = ()
   type = logical
+[pert_gwd]
+  standard_name = flag_for_stochastic_gwd_perturbations
+  long_name = flag for stochastic gravity wave drag perturbations
+  units = flag
+  dimensions = ()
+  type = logical
 [pert_clds]
   standard_name = flag_for_stochastic_cloud_fraction_perturbations
   long_name = flag for stochastic cloud fraction perturbations
@@ -7049,6 +7055,21 @@
   type = real
   kind = kind_phys
   active = (flag_for_stochastic_physics_perturbations .or. flag_for_global_cellular_automata)
+[dudtnp]
+  standard_name = tendency_of_zonal_wind_to_withold_from_sppt
+  long_name = temp. change from physics that should not be perturbed by sppt
+  units = m s-1
+  dimensions = (horizontal_loop_extent,vertical_layer_dimension)
+  type = real
+  kind = kind_phys
+[dvdtnp]
+  standard_name = tendency_of_meridional_wind_to_withold_from_sppt
+  long_name = temp. change from physics that should not be perturbed by sppt
+  units = m s-1
+  dimensions = (horizontal_loop_extent,vertical_layer_dimension)
+  type = real
+  kind = kind_phys
+  active = (flag_for_stochastic_physics_perturbations .and. .not. flag_for_stochastic_gwd_perturbations)
 [drain_cpl]
   standard_name = tendency_of_lwe_thickness_of_rain_amount_on_dynamics_timestep_for_coupling
   long_name = change in rain_cpl (coupling_type)

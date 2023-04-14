@@ -1270,6 +1270,7 @@ module GFS_typedefs
     logical              :: pert_clds
     logical              :: pert_radtend
     logical              :: pert_mp
+    logical              :: pert_gwd
     logical              :: use_zmtnblck
     logical              :: do_shum
     logical              :: do_skeb
@@ -1597,6 +1598,8 @@ module GFS_typedefs
 
 !--- Stochastic physics properties calculated in physics_driver
     real (kind=kind_phys), pointer :: dtdtnp    (:,:)  => null()  !< temperature change from physics that should not be perturbed with SPPT (k)
+    real (kind=kind_phys), pointer :: dudtnp    (:,:)  => null()  !< zonal wind change from physics that should not be perturbed with SPPT (k)
+    real (kind=kind_phys), pointer :: dvdtnp    (:,:)  => null()  !< meridonal wind change from physics that should not be perturbed with SPPT (k)
     real (kind=kind_phys), pointer :: dtotprcp  (:)    => null()  !< change in totprcp  (diag_type)
     real (kind=kind_phys), pointer :: dcnvprcp  (:)    => null()  !< change in cnvprcp  (diag_type)
     real (kind=kind_phys), pointer :: drain_cpl (:)    => null()  !< change in rain_cpl (coupling_type)
@@ -3590,6 +3593,7 @@ module GFS_typedefs
 !--- stochastic physics control parameters
     logical :: do_sppt      = .false.
     logical :: pert_mp      = .false.
+    logical :: pert_gwd     = .true.
     logical :: pert_clds    = .false.
     logical :: pert_radtend = .true.
     logical :: use_zmtnblck = .false.
@@ -3730,7 +3734,7 @@ module GFS_typedefs
                                do_sppt, do_shum, do_skeb,                                   &
                                do_spp, n_var_spp,                                           &
                                lndp_type,  n_var_lndp, lndp_each_step,                      &
-                               pert_mp,pert_clds,pert_radtend,                              &
+                               pert_mp,pert_gwd, pert_clds,pert_radtend,                    &
                           !--- Rayleigh friction
                                prslrd0, ral_ts,  ldiag_ugwp, do_ugwp, do_tofd,              &
                           ! --- Ferrier-Aligo
@@ -4659,6 +4663,7 @@ module GFS_typedefs
     ! to the stochastic physics namelist parametersto ensure consistency.
     Model%do_sppt          = do_sppt
     Model%pert_mp          = pert_mp
+    Model%pert_gwd         = pert_gwd
     Model%pert_clds        = pert_clds
     Model%pert_radtend     = pert_radtend
     Model%use_zmtnblck     = use_zmtnblck
@@ -6403,6 +6408,7 @@ module GFS_typedefs
       print *, 'stochastic physics'
       print *, ' do_sppt           : ', Model%do_sppt
       print *, ' pert_mp         : ', Model%pert_mp
+      print *, ' pert_gwd        : ', Model%pert_gwd
       print *, ' pert_clds       : ', Model%pert_clds
       print *, ' pert_radtend    : ', Model%pert_radtend
       print *, ' do_shum           : ', Model%do_shum
@@ -6691,6 +6697,12 @@ module GFS_typedefs
       Tbd%dtdtnp    = clear_val
       Tbd%dtotprcp  = clear_val
       Tbd%dcnvprcp  = clear_val
+      if (.not. Model%pert_gwd ) then
+         allocate (Tbd%dudtnp    (IM,Model%levs))
+         allocate (Tbd%dvdtnp    (IM,Model%levs))
+         Tbd%dudtnp    = clear_val
+         Tbd%dvdtnp    = clear_val
+      endif
     endif
 
     allocate (Tbd%phy_f2d  (IM,Model%ntot2d))
